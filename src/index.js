@@ -2,13 +2,12 @@ import dotenv from "dotenv"
 import mongoose from "mongoose";
 import  express  from "express";
 import connectDB from "./db/index.js";
-// import {app} from "./app.js"
+import app from "./app.js"
 
 dotenv.config({
     path : "./env"
 }) ;
 
-const app = express();
 
 connectDB().then(() => {
     app.on('err' , (err) => {
