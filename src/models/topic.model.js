@@ -1,15 +1,18 @@
-import moongose , {Schema} from "mongoose"
+import mongoose , {Schema} from "mongoose";
 
 const topicSchema = new Schema({
-    topicName : {
-        type : String ,
+    name : {
+        type : String , 
         required : true , 
     },
-    numberOfProblems : {
-        type : Number ,
-        required : true , 
-        default : 0 ,
-    }
-} ,{timestamps : true})
 
-export const Topic = moongose.model("Topic" , topicSchema)
+    problems : [
+        {
+            type : mongoose.Schema.Types.ObjectId,
+            ref : "Problem"
+        }
+    ]
+
+} , {timestamps : true })
+
+export const Topic = mongoose.model("Topic" , topicSchema)

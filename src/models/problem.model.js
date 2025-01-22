@@ -12,15 +12,18 @@ const problemSchema = new Schema({
     enum: ['Easy', 'Medium', 'Hard'],
     required: true,
   },
-  topic: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Topic',
-    required: true,
+  topicName : {
+    type : String ,
+    required : true , 
   },
   link: {
     type: String,
     required: true,
   },
+  problemNumber : {
+    type : Number ,
+    required : true ,
+  }
 }, { timestamps: true });
 
 export const Problem = mongoose.model("Problem" , problemSchema)

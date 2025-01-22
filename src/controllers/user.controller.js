@@ -5,6 +5,7 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
 import fs from "fs" 
+import { UserProgress } from "../models/userprogress.model.js"
 
 const registerUser = asyncHandler(async (req,res) => {
 
@@ -19,7 +20,6 @@ const registerUser = asyncHandler(async (req,res) => {
     })
 
     if(user){
-
         throw new ApiError(409, "User with email or username already exists")
     }
     
@@ -45,12 +45,6 @@ const registerUser = asyncHandler(async (req,res) => {
 })
 
 const login = asyncHandler (async (req,res) => {
-    //Steps while login the user . . .
-    //Get all the details from the frontEnd 
-    //Check whether any field is empty or not 
-    //after that check whether the user is already logged in or not by checking the token
-    //if user is not having the access token then after than do the login and check whether the user is having an account or not 
-    //if user is having the access token then check the expiry of the access token and also if the access token is expired then check the refresh token 
 
     const {email , password} = req.body
 
@@ -73,9 +67,9 @@ const login = asyncHandler (async (req,res) => {
     let refreshToken = "" ;
 
     try{
-        accessToken = user.generateAccessToken()
+        accessToken = await user.generateAccessToken()
 
-        refreshToken = user.generateRefToken()
+        refreshToken = await user.generateRefToken()
 
         user.refreshToken = refreshToken
         await user.save({validateBeforeSave : false })
@@ -87,12 +81,14 @@ const login = asyncHandler (async (req,res) => {
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
     const options = {
-        httpOnly : true ,
-        secure : true 
-    }
+        httpOnly: true, // Prevents client-side scripts from accessing the cookie
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax', 
+      }
 
+    console.log("accessToken: " , accessToken)
     //cookies are not set in the mobile application at the user end that's why here we are sending the accesstoken and refreshtoken in the response to the user 
-    return res.status(200).cookie("accessToken",accessToken,options).cookie("refreshToken",refreshToken).json(
+    return res.status(200).cookie("accessToken", accessToken ,options).cookie("refreshToken",refreshToken , options).json(
         new ApiResponse(200 , 
             { user : loggedInUser , accessToken , refreshToken
 
@@ -122,6 +118,52 @@ const logoutUser = asyncHandler(async(req,res) => {
     }
 
     return res.status(200).clearCookie("accessToken", options).clearCookie("refreshToken",options).json(new ApiResponse(200 , {} , "User logged out"))
+})
+
+const getSolvedProblemsCountByTopic = asyncHandler(async (userId, topicNames) => {
+      const result = [];
+  
+      // Loop through each topic name to get the count of solved problems
+      for (const topicName of topicNames) {
+
+        const solvedCount = await UserProgress.aggregate([
+          { $match: { user: userId } },  // Match the specific user
+          { $unwind: '$list' },  // Unwind the 'list' array to work with individual problems
+          { $lookup: {
+            from: 'problems',  // Join with the Problem collection
+            localField: 'list.problem',
+            foreignField: '_id',
+            as: 'problemDetails',
+          }},
+          { $unwind: '$problemDetails' },  // Unwind the resulting problems array
+          { $match: { 'problemDetails.topicName': topicName, 'list.status': 'Solved' } },  // Filter for problems by topic and status 'Solved'
+          { $count: 'solvedProblems' }  // Count the number of solved problems for the topic
+        ]);
+  
+        // If there are solved problems, push the count; otherwise, push 0
+        result.push(solvedCount[0] ? solvedCount[0].solvedProblems : 0);
+      }
+  
+      return result;
+  }
+)
+  
+const getUserInfo = asyncHandler(async (req,res) => {
+    const {topicNames} = req.body ;
+    let solvedProblems = 0 ; 
+    solvedProblems = await UserProgress.findOne({ user: req.user._id })
+    .select('list.problem') // Only select the problems
+    .where('list.status').equals('Solved')
+    .populate('list.problem')
+    .exec();
+    if(solvedProblems === null){
+        solvedProblems = 0 ;
+    }
+
+    const result = getSolvedProblemsCountByTopic(req.user._id , topicNames)
+
+
+    return res.status(200).json(new ApiResponse(200 , {user : req.user , totalProblems : solvedProblems , result} , "User Info fetched Successfully "))
 })
 
 const refreshAccessToken = asyncHandler(async (req , res) => {
@@ -171,4 +213,5 @@ const refreshAccessToken = asyncHandler(async (req , res) => {
 
     
 })
-export {registerUser , login , logoutUser , refreshAccessToken}
+
+export {registerUser , login , logoutUser , refreshAccessToken ,getUserInfo}
