@@ -6,24 +6,29 @@ import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
 import fs from "fs" 
 import { Topic } from "../models/topic.model.js"
-import { UserProgress} from "./models/userprogress.model.js"
-import {Problem} from   "./models/problem.model.js"
+import { UserProgress} from "../models/userprogress.model.js"
+import {Problem} from   "../models/problem.model.js"
 
-const problemNumbersFromTopic = asyncHandler(async (req,res) => {
+//We can add the functionality of the updating the problem by the admin in future ... 
+
+
+const problemNumbersFromTopic = asyncHandler(async (req,res,next) => {
     const { dsaTopics } = req.body ;
 
     if(!dsaTopics){
         throw new ApiError(400 , "topicNames are required . . .");
     }   
-    const id = 1 ; 
-    const response = dsaTopics.map(topicName => {
-        const matchedDoc = Topic.find(doc => doc.name === topicName);
+    const response = await Promise.all(
+      dsaTopics.map(async (topicName) => {
+        const matchedDoc = await Topic.find({ name: topicName.name }); 
         return {
-          id : (id++) , 
-          name: topicName,
-          number: matchedDoc ? matchedDoc.problems.length : 0, 
+          id: topicName.id,
+          name: topicName.name,
+          number: matchedDoc.problems ? matchedDoc.problems.length : 0,
         };
-      });
+      })
+    );
+    
 
     return res.status(200).json(
         new ApiResponse(200 , response , "number of problems got of each topic")
@@ -31,10 +36,10 @@ const problemNumbersFromTopic = asyncHandler(async (req,res) => {
     
 })
 
-const getProblemsList = asyncHandler(async (req,res) => {
+const getProblemsList = asyncHandler(async (req,res,next) => {
   const topicName = req.params.topicName ;
   
-      const userProgress = await UserProgress.aggregate([
+  const userProgress = await UserProgress.aggregate([
         // Match the specific user
         { $match: { user: req.user._id } },
   
@@ -76,65 +81,129 @@ const getProblemsList = asyncHandler(async (req,res) => {
           },
         },
       ]);
-  
       return res.status(200).json(
-        new ApiResponse(200 , (userProgress[0] || null) , "got the problem list")
+        new ApiResponse(200 , (userProgress || null) , "got the problem list")
       )
     } 
   
 )
 
-const addProblem = asyncHandler(async (req,res) => {
-  const {name , difficulty , topicName , link , problemNumber} = req.body ; 
+const addProblem = asyncHandler(async (req, res, next) => {
+  const { name, difficulty, topicName, link, problemNumber } = req.body;
 
-  if([name , difficulty , topicName , link , problemNumber].some((field) => field?.trim === "")){
-    throw new ApiError(400 , "All Fields are required ")
+  // Validate all required fields
+  if ([name, difficulty, topicName, link, problemNumber].some((field) => !field || field.trim() === "")) {
+    throw new ApiError(400, "All Fields are required");
   }
 
-  const problem = await User.findOne({problemNumber});
-
-  if(problem){
-    throw new ApiError(409, "User with email or username already exists")
+  // Check if a problem with the same problemNumber already exists
+  const existingProblem = await Problem.findOne({ problemNumber });
+  if (existingProblem) {
+    throw new ApiError(409, "Problem with this problemNumber already exists");
   }
 
+  // Create the new problem
   const newProblem = await Problem.create({
     name,
     difficulty,
     topicName,
     link,
     problemNumber,
-  })
+  });
 
-  const createdProblem = await Problem.findById(newProblem._id);
+  //Adding the problem to its topic . . . 
+  const topic = await Topic.find({name})
+  if (!topic) {
+    // If no UserProgress exists, create one
+    topic = new Topic({
+      name: name,
+      problems: [], // Start with the new problem
+    });
+  } else {
+    // If UserProgress exists, check if the problem is already added
+    const isProblemInList = topic.problems.some((entry) =>
+      entry.equals(newProblem._id)
+    );
 
-  if(!createdProblem){
-    throw new ApiError(500 , "Problem is not created Successfully . . . ");
+    if (!isProblemInList) {
+      topic.problems.push(newProblem);
+    }
   }
+
+  await topic.save();
+
+  // Fetch all users (assuming you have a User model)
+  const allUsers = await User.find({});
+
+  // Prepare the default progress object
+  const defaultProgress = {
+    problem: newProblem._id,
+    status: "Skipped", // Default status
+    notes: "",         // Default empty notes
+    isBookmarked: false, // Default not bookmarked
+  };
+
+  // Iterate through all users and ensure UserProgress exists or is updated
+  await Promise.all(
+    allUsers.map(async (user) => {
+      // Find the UserProgress document for the user
+      let userProgress = await UserProgress.findOne({ user: user._id });
+
+      if (!userProgress) {
+        // If no UserProgress exists, create one
+        userProgress = new UserProgress({
+          user: user._id,
+          list: [defaultProgress], // Start with the new problem
+        });
+      } else {
+        // If UserProgress exists, check if the problem is already added
+        const isProblemInList = userProgress.list.some((entry) =>
+          entry.problem.equals(newProblem._id)
+        );
+
+        if (!isProblemInList) {
+          userProgress.list.push(defaultProgress);
+        }
+      }
+
+      // Save the user progress
+      await userProgress.save();
+    })
+  );
 
   return res.status(201).json(
-    new ApiResponse(200 , createdProblem , "new peoblem created successfully . . . ")
-  )
+    new ApiResponse(201, newProblem, "New problem created and appended to user progress")
+  );
+});
 
-})
+//Add the logic of deletion the problem from the topic model in the db . . . 
+const deleteProblem = asyncHandler(async (req, res, next) => {
+  const problemId  = req.params.problemId;
 
-// const updateProblem = asyncHandler(async (req,res) => {
-//   const {name , }
-// })
+  // Step 1: Find the problem in the Problem collection
+  const problem = await Problem.findById(problemId);
 
-const deleteProblem = asyncHandler(async (req,res) => {
-  const problemNumber = req.params.problemNumber ; 
-
-  if(!problemNumber){
-    return new ApiError(404 , "problem not found . . .");
+  if (!problem) {
+    throw new ApiError(404, "Problem not found");
   }
 
-  await Problem.findOneAndDelete({problemNumber});
+  // Step 2: Remove the problem from the Problem collection
+  await Problem.findByIdAndDelete(problemId);
 
-  res.status(200).send(new ApiResponse(200 , null , "problem deleted successfully . . . "));
+  // Step 3: Remove the problem from all UserProgress documents
+  await UserProgress.updateMany(
+    { "list.problem": problemId }, // Find UserProgress containing the problem
+    { $pull: { list: { problem: problemId } } } // Remove the specific problem
+  );
 
-})
+  // Step 4: Return success response
+  return res.status(200).json(
+    new ApiResponse(200, null, "Problem deleted successfully from Problem collection and UserProgress")
+  );
+});
 
-const getSolvedProblemsCountByTopic = asyncHandler (async (req, res) => {
+//Is this required . . . 
+const getSolvedProblemsCountByTopic = asyncHandler (async (req,res,next) => {
   const {topicNames} = req.body ; 
   try {
     const result = [];

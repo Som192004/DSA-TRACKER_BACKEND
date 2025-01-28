@@ -6,7 +6,6 @@ const userProgressSchema = new Schema({
     ref: 'User',
     required: true,
   },
-  
   list : [
     {
       problem: {
@@ -17,11 +16,12 @@ const userProgressSchema = new Schema({
       status: {
         type: String,
         enum: ['Solved', 'Attempted', 'Skipped'],
-        required: true,
+        default : "Skipped"
       },
       notes: {
         type: String,
         trim: true,
+        default : "" ,
       },
       isBookmarked: {
         type: Boolean,
@@ -31,6 +31,16 @@ const userProgressSchema = new Schema({
   ]
   
 }, { timestamps: true });
+
+userProgressSchema.pre("save", function (next) {
+  this.list = this.list.map((item) => ({
+    problem: item.problem,
+    status: item.status || "Skipped",
+    notes: item.notes || "",
+    isBookmarked: item.isBookmarked ?? false,
+  }));
+  next();
+});
 
 export const UserProgress = mongoose.model("UserProgress" , userProgressSchema)
 

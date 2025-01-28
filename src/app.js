@@ -23,11 +23,14 @@ app.use((req, res, next) => {
 //importing the routes . . . 
 import userRouter from "./routes/user.routes.js"
 import problemRouter from "./routes/problem.routes.js"
+import adminRouter from "./routes/admin.routes.js"
 
 app.use("/users" , userRouter)
-app.use("/problem" , problemRouter)
+app.use("/problems" , problemRouter)
+app.use("/admin" , adminRouter)
 app.get("/" , (req , res) => {
     res.send("Hello")
     console.log("user get . . . ")
 })
+
 export default app ;

@@ -1,29 +1,34 @@
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 
-export const verifyJWT = asyncHandler(async(req, res , next ) => {
-    console.log("cookies: " , req.cookies)
-    try{
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer " ,"")
+const verifyToken = asyncHandler(async (req, res, next) => {
+  const token = req.body.Authorization;
 
-    if(!token){
-        throw new ApiError(401 , "Unauthorizd Request")
+  if (!token) {
+    return next(new ApiError(401, "Unauthorized: No token provided"));
+  }
+
+  try {
+    // Verify token and decode it
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+    // Find the user based on decoded token
+    const user = await User.findById(decoded._id);
+    if (!user) {
+      return next(new ApiError(401, "Unauthorized: User not found"));
     }
 
-    const decodedToken = jwt.verify(token , process.env.ACCESS_TOKEN_SECRET)
+    // Attach the user object to the request
+    req.user = user;
 
-    const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
+    // Proceed to the next middleware
+    next();
+  } catch (error) {
+    console.error("Authentication Error:", error);
+    return next(new ApiError(401, "Unauthorized: Token is invalid or expired"));
+  }
+});
 
-    if(!user){
-        throw new ApiError(401 , "Invalid Access Token")
-    }
-
-    req.user = user ;
-    next() 
-    }
-    catch(error){
-        throw new ApiError(401 ,error?.message || "Invalid Access Token")
-    }
-})
+export { verifyToken };
