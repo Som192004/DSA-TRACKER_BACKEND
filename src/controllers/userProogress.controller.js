@@ -4,7 +4,7 @@ import {User} from "../models/user.model.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import { UserProgress} from "../models/userprogress.model.js"
 import {Problem} from   "../models/problem.model.js"
-
+//This is ok
 const updateUserProgress = asyncHandler(async (req, res, next) => {
     const { problemId } = req.params;
     const { status, notes, isBookmarked } = req.body;

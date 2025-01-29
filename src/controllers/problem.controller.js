@@ -9,9 +9,8 @@ import { Topic } from "../models/topic.model.js"
 import { UserProgress} from "../models/userprogress.model.js"
 import {Problem} from   "../models/problem.model.js"
 
-//We can add the functionality of the updating the problem by the admin in future ... 
-
-
+//We can add the functionality of the updating the problem by the admin in future ...
+// This is the ok 
 const problemNumbersFromTopic = asyncHandler(async (req,res,next) => {
     const { dsaTopics } = req.body ;
 
@@ -36,6 +35,7 @@ const problemNumbersFromTopic = asyncHandler(async (req,res,next) => {
     
 })
 
+//This is ok. .. 
 const getProblemsList = asyncHandler(async (req,res,next) => {
   const topicName = req.params.topicName ;
   
@@ -87,7 +87,7 @@ const getProblemsList = asyncHandler(async (req,res,next) => {
     } 
   
 )
-
+// This is ok ...
 const addProblem = asyncHandler(async (req, res, next) => {
   const { name, difficulty, topicName, link, problemNumber } = req.body;
 
@@ -112,15 +112,13 @@ const addProblem = asyncHandler(async (req, res, next) => {
   });
 
   //Adding the problem to its topic . . . 
-  const topic = await Topic.find({name})
+  const topic = await Topic.find({name : topicName})
   if (!topic) {
-    // If no UserProgress exists, create one
     topic = new Topic({
       name: name,
-      problems: [], // Start with the new problem
+      problems: [newProblem], // Start with the new problem
     });
   } else {
-    // If UserProgress exists, check if the problem is already added
     const isProblemInList = topic.problems.some((entry) =>
       entry.equals(newProblem._id)
     );
@@ -176,7 +174,7 @@ const addProblem = asyncHandler(async (req, res, next) => {
   );
 });
 
-//Add the logic of deletion the problem from the topic model in the db . . . 
+// This is ok
 const deleteProblem = asyncHandler(async (req, res, next) => {
   const problemId  = req.params.problemId;
 
@@ -190,7 +188,24 @@ const deleteProblem = asyncHandler(async (req, res, next) => {
   // Step 2: Remove the problem from the Problem collection
   await Problem.findByIdAndDelete(problemId);
 
-  // Step 3: Remove the problem from all UserProgress documents
+  //Step 3: Remove the problem from the topic collection
+
+        // Step 1: Find the topic that contains the given problemId
+        const topic = await Topic.findOne({ name: problem.topicName });
+
+        if (!topic) {
+            return res.status(404).json({ message: "Problem not found in any topic" });
+        }
+
+        // Step 2: Remove the problemId from the topic's problem list
+        topic.problems = topic.problems.filter(
+            (id) => id.toString() !== problemId
+        );
+
+        // Step 3: Save the updated topic document
+        await topic.save();
+
+  // Step 4: Remove the problem from all UserProgress documents
   await UserProgress.updateMany(
     { "list.problem": problemId }, // Find UserProgress containing the problem
     { $pull: { list: { problem: problemId } } } // Remove the specific problem

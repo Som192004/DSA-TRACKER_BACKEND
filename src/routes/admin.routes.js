@@ -5,6 +5,6 @@ const router = Router();
 
 router.route("/register").post(registerAdmin)
 router.route("/login").post(login)
-// router.route("/logout").post(verifyToken , logoutAdmin)
+
 
 export default router ;

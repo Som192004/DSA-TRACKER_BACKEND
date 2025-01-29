@@ -31,4 +31,22 @@ const verifyToken = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { verifyToken };
+export const authorizeRole = (roles) => (req, res, next) => {
+  try {
+    console.log("AuthorizeRole: Required roles:", roles);
+    console.log("AuthorizeRole: Current role:", req.user?.role);
+
+    if (!roles.includes(req.user?.role)) {
+      return next(
+        new ApiError(403, "Forbidden: You do not have access to this resource")
+      );
+    }
+
+    next();
+  } catch (error) {
+    console.error("AuthorizeRole: Error occurred", error);
+    next(new ApiError(500, "Internal Server Error"));
+  }
+};
+
+export { verifyToken , authorizeRole};

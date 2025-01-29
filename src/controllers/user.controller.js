@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
 import fs from "fs" 
 import { UserProgress } from "../models/userprogress.model.js"
+import { Problem } from "../models/problem.model.js"
 
 //Testing is done Ok
 const registerUser = asyncHandler(async (req,res) => {
@@ -72,7 +73,6 @@ const registerUser = asyncHandler(async (req,res) => {
 
   // Save the new UserProgress document
   await userProgress.save();
-
 
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User Registered and UserProgress intialized Successfully ! ")
