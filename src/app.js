@@ -24,10 +24,15 @@ app.use((req, res, next) => {
 import userRouter from "./routes/user.routes.js"
 import problemRouter from "./routes/problem.routes.js"
 import adminRouter from "./routes/admin.routes.js"
+import topicRouter from "./routes/topic.routes.js"
+import userProgressRouter from "./routes/userProgress.routes.js"
 
 app.use("/users" , userRouter)
 app.use("/problems" , problemRouter)
 app.use("/admin" , adminRouter)
+app.use("/topic" , topicRouter)
+app.use("/userprogress" , userProgressRouter)
+
 app.get("/" , (req , res) => {
     res.send("Hello")
     console.log("user get . . . ")

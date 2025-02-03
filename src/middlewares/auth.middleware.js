@@ -2,9 +2,9 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
-
+import { Admin } from "../models/admin.model.js"
 const verifyToken = asyncHandler(async (req, res, next) => {
-  const token = req.body.Authorization;
+  const token = req.body.Authorization || req.headers.authorization ;
 
   if (!token) {
     return next(new ApiError(401, "Unauthorized: No token provided"));
@@ -31,7 +31,34 @@ const verifyToken = asyncHandler(async (req, res, next) => {
   }
 });
 
-export const authorizeRole = (roles) => (req, res, next) => {
+const verifyTokenOfAdmin = asyncHandler(async (req, res, next) => {
+  const token = req.body.Authorization || req.headers.authorization ;
+  if (!token) {
+    return next(new ApiError(401, "Unauthorized: No token provided"));
+  }
+
+  try {
+    // Verify token and decode it
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+    // Find the user based on decoded token
+    const user = await Admin.findById(decoded._id);
+    if (!user) {
+      return next(new ApiError(401, "Unauthorized: User not found"));
+    }
+
+    // Attach the user object to the request
+    req.user = user;
+
+    // Proceed to the next middleware
+    next();
+  } catch (error) {
+    console.error("Authentication Error:", error);
+    return next(new ApiError(401, "Unauthorized: Token is invalid or expired"));
+  }
+});
+
+const authorizeRole = (roles) => (req, res, next) => {
   try {
     console.log("AuthorizeRole: Required roles:", roles);
     console.log("AuthorizeRole: Current role:", req.user?.role);
@@ -49,4 +76,4 @@ export const authorizeRole = (roles) => (req, res, next) => {
   }
 };
 
-export { verifyToken , authorizeRole};
+export { verifyToken , authorizeRole , verifyTokenOfAdmin};

@@ -6,6 +6,7 @@ const userProgressSchema = new Schema({
     ref: 'User',
     required: true,
   },
+
   list : [
     {
       problem: {
@@ -15,8 +16,8 @@ const userProgressSchema = new Schema({
       },
       status: {
         type: String,
-        enum: ['Solved', 'Attempted', 'Skipped'],
-        default : "Skipped"
+        enum: ['Solved', 'UnSolved'],
+        default : "UnSolved"
       },
       notes: {
         type: String,
@@ -35,7 +36,7 @@ const userProgressSchema = new Schema({
 userProgressSchema.pre("save", function (next) {
   this.list = this.list.map((item) => ({
     problem: item.problem,
-    status: item.status || "Skipped",
+    status: item.status || "UnSolved",
     notes: item.notes || "",
     isBookmarked: item.isBookmarked ?? false,
   }));

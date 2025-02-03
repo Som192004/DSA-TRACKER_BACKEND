@@ -10,7 +10,7 @@ const topicSchema = new Schema({
         {
             type : mongoose.Schema.Types.ObjectId,
             ref : "Problem"
-        }
+        },
     ]
 
 } , {timestamps : true })

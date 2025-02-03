@@ -4,51 +4,49 @@ import {User} from "../models/user.model.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import { UserProgress} from "../models/userprogress.model.js"
 import {Problem} from   "../models/problem.model.js"
-//This is ok
-const updateUserProgress = asyncHandler(async (req, res, next) => {
+import mongoose from "mongoose";
+
+
+const updateUserProgress = async (req, res) => {
+  try {
     const { problemId } = req.params;
-    const { status, notes, isBookmarked } = req.body;
-  
-    // Validate inputs
-    if (![status, notes, isBookmarked].some(field => field !== undefined)) {
-      throw new ApiError(400, "At least one field (status, notes, or isBookmarked) must be provided.");
+    const { status, notes, isBookmarked } = req.body.editedProblem ;
+    const userId = req.user._id; 
+
+    if (!problemId) {
+      return res.status(400).send(new ApiError(400 , "Problem ID is required."));
     }
-  
-    // Validate problem existence in UserProgress
-    const userProgress = await UserProgress.findOne({
-      user: req.user._id,
-      "list.problem": problemId,
-    });
-  
+
+    // Find user's progress document
+    const userProgress = await UserProgress.findOne({ user: userId });
+
     if (!userProgress) {
-      throw new ApiError(404, "Problem not found in user progress.");
+      return res.status(404).send(new ApiError(404 , "User progress not found."));
     }
-  
-    // Update the specific problem in the list
-    const updated = await UserProgress.updateOne(
-      {
-        user: req.user._id,
-        "list.problem": problemId,
-      },
-      {
-        $set: {
-          ...(status !== undefined && { "list.$.status": status }), // Update status
-          ...(notes !== undefined && { "list.$.notes": notes }), // Update notes
-          ...(isBookmarked !== undefined && { "list.$.isBookmarked": isBookmarked }), // Update bookmark
-        },
-      }
+
+    // Find the specific problem in the list
+    const problemEntry = userProgress.list.find((item) =>
+      item._id.equals(problemId)
     );
-  
-    // Check if the update was successful
-    if (updated.modifiedCount === 0) {
-      throw new ApiError(500, "Failed to update user progress.");
+
+    if (!problemEntry) {
+      return res.status(404).send(new ApiError(404 , "Problem not found in user progress."));
     }
-  
-    // Send success response
-    return res.status(200).json(
-      new ApiResponse(200, null, "User progress updated successfully.")
-    );
-});
+
+    // Update the fields if provided in the request body
+    if (status) problemEntry.status = status;
+    if (notes !== undefined) problemEntry.notes = notes;
+    if (isBookmarked !== undefined) problemEntry.isBookmarked = isBookmarked;
+
+    await userProgress.save();
+
+    return res.status(200).send(new ApiResponse(200 , problemEntry ,"Progress updated successfully"));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send(new ApiError(500 , "Internal server error."));
+  }
+};
+
   
 const getProblemsList = asyncHandler(async (req,res,next) => {
     const topicName = req.params.topicName ;
@@ -111,4 +109,4 @@ const getProblemsList = asyncHandler(async (req,res,next) => {
 // });
 
 
-export {updateUserProgress , getProblemsList , initializeUserProgress}
+export {updateUserProgress , getProblemsList }

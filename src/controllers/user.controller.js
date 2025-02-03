@@ -131,15 +131,15 @@ const getUserInfo = asyncHandler(async (req, res) => {
     const topicNames  = req.body.topicNames ;
     try {
         // Fetch solved problems
-        let solvedProblems = await UserProgress.findOne({ user: req.user._id })
-            .select('list.problem') // Select only the problems
-            .where('list.status')
-            .equals('Solved')
-            .populate('list.problem')
-            .exec();
-
-        // Handle null case
-        solvedProblems = solvedProblems ? solvedProblems.list.problem.length : 0;
+        const solvedProblemCount = await UserProgress.aggregate([
+          { $match: { user: req.user._id } }, // Match the specific user
+          { $unwind: "$list" }, // Unwind the 'list' array to access each problem
+          { $match: { "list.status": "Solved" } }, // Filter only solved problems
+          { $count: "totalSolvedProblems" } // Count the number of solved problems
+      ]);
+      
+      // Extract count from the result (if no problems are solved, return 0)
+      const totalSolved = solvedProblemCount.length > 0 ? solvedProblemCount[0].totalSolvedProblems : 0;
 
         // Await result from the asynchronous function
         const result = await Promise.all(
@@ -177,7 +177,7 @@ const getUserInfo = asyncHandler(async (req, res) => {
             .json(
                 new ApiResponse(
                     200,
-                    { user, totalProblems: solvedProblems, result },
+                    { user, totalProblems: totalSolved, result },
                     "User Info fetched successfully"
                 )
             );

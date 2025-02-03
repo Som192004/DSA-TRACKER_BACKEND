@@ -5,6 +5,7 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
 
+
 const registerAdmin = asyncHandler(async (req,res) => {
 
     const {adminname , email  , password } = req.body ;
