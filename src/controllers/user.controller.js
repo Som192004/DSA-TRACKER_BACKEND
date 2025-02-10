@@ -65,7 +65,7 @@ const registerUser = asyncHandler(async (req,res) => {
     user: userId,
     list: problems.map(problem => ({
       problem: problem._id,
-      status: "Skipped", // Default status
+      status: "UnSolved", // Default status
       notes: "", // Default notes
       isBookmarked: false, // Default bookmark status
     })),

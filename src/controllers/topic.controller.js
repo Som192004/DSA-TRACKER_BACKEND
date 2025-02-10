@@ -8,7 +8,6 @@ import fs from "fs"
 import { Topic } from "../models/topic.model.js"
 
 const addTopic = asyncHandler (async (req,res) => {
-    console.log("I am receiving the request")
     const {topicName} = req.body ;
 
     if(!topicName.trim()){
