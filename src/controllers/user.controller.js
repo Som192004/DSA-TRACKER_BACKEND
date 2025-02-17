@@ -191,5 +191,48 @@ const getUserInfo = asyncHandler(async (req, res) => {
     }
 });
 
+const updateUserInfo = asyncHandler(async (req,res) => {
+  try {
+    // Get the user id. This example assumes you have an auth middleware that attaches the user.
+    const userId = req.user?._id; 
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized: User not authenticated" });
+    }
 
-export {registerUser , login  ,getUserInfo}
+    // Extract only the fields that are allowed to be updated
+    const { username, fullname, email, collegeName, leetCodeId } = req.body;
+    const updateFields = {};
+
+    // Only add the field to the update object if it is provided
+    if (username) updateFields.username = username;
+    if (fullname) updateFields.fullname = fullname;
+    if (email) updateFields.email = email;
+    if (collegeName) updateFields.collegeName = collegeName;
+    if (leetCodeId) updateFields.leetCodeId = leetCodeId;
+
+    // Find the user by id and update the provided fields
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true, runValidators: true } // return the updated document and run schema validators
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({
+      message: "Server error updating user",
+      error: error.message,
+    });
+}
+})
+
+
+export {registerUser , login  ,getUserInfo ,updateUserInfo}

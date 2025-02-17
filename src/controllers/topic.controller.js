@@ -14,7 +14,10 @@ const addTopic = asyncHandler (async (req,res) => {
         throw new ApiError(400, "Topic name is required");
     }
 
-    const existingTopic = await Topic.findOne({ name : topicName });
+    const existingTopic = await Topic.findOne({ 
+        name: { $regex: `^${topicName}$`, $options: "i" } 
+      });
+      
 
     if (existingTopic) {
         throw new ApiError(409, "Topic with this topicName already exists");
