@@ -308,6 +308,8 @@ const getUserProfileByItsuserName = asyncHandler (async (req,res) => {
           { $count: "totalSolvedProblems" } // Count the number of solved problems
       ]);
       
+      console.log("username:" , username)
+      console.log("solvedCount: " , solvedProblemCount)
       // Extract count from the result (if no problems are solved, return 0)
       const totalSolved = solvedProblemCount.length > 0 ? solvedProblemCount[0].totalSolvedProblems : 0;
 
