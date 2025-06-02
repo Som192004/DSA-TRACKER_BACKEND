@@ -11,8 +11,8 @@ router.route("/profile").post(verifyToken , authorizeRole(['User']) , getUserInf
 
 router.route("/update-profile").patch(verifyToken , authorizeRole(['User']) , updateUserInfo)
 
-router.route("/get-rankings").get(verifyToken,authorizeRole(['User']) , getAllUsersByThereRank)
+router.route("/get-rankings").post(verifyToken, authorizeRole(['User']) , getAllUsersByThereRank)
 
-router.route("/get-user-profile/:username").get(verifyToken, authorizeRole(['User']), getUserProfileByItsuserName)
+router.route("/get-user-profile/:username").post(verifyToken, authorizeRole(['User']), getUserProfileByItsuserName)
 
 export default router ;
