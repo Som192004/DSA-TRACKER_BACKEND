@@ -27,6 +27,7 @@ import adminRouter from "./routes/admin.routes.js"
 import topicRouter from "./routes/topic.routes.js"
 import userProgressRouter from "./routes/userProgress.routes.js"
 import blogRouter from "./routes/blog.routes.js"
+import mentorRouter from "./routes/mentor.routes.js"
 
 app.use("/users" , userRouter)
 app.use("/problems" , problemRouter)
@@ -34,6 +35,7 @@ app.use("/admin" , adminRouter)
 app.use("/topic" , topicRouter)
 app.use("/userprogress" , userProgressRouter)
 app.use("/blog" ,blogRouter)
+app.use('/mentor' , mentorRouter)
 
 app.get("/" , (req , res) => {
     res.send("Hello")

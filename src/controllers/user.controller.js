@@ -234,5 +234,128 @@ const updateUserInfo = asyncHandler(async (req,res) => {
 }
 })
 
+const getAllUsersByThereRank = asyncHandler(async (req, res) => {
+  try {
+    // Step 1: Aggregate user progress to count solved problems per user
+    const rankings = await UserProgress.aggregate([
+      {
+        $unwind: "$list",
+      },
+      {
+        $match: {
+          "list.status": "Solved",
+        },
+      },
+      {
+        $group: {
+          _id: "$user",
+          solvedCount: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          solvedCount: -1,
+        },
+      },
+      {
+        $lookup: {
+          from: "users", 
+          localField: "_id",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      {
+        $unwind: "$userDetails",
+      },
+      {
+        $project: {
+          _id: 0,
+          userId: "$userDetails._id",
+          username: "$userDetails.username",
+          fullname: "$userDetails.fullname",
+          collegeName: "$userDetails.collegeName",
+          solvedCount: 1,
+        },
+      },
+    ]);
 
-export {registerUser , login  ,getUserInfo ,updateUserInfo}
+    return res.status(200).json({
+      success: true,
+      message: "User rankings fetched successfully",
+      data: rankings,
+    });
+  } catch (error) {
+    console.error("Error fetching rankings:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+});
+
+const getUserProfileByItsuserName = asyncHandler (async (req,res) => {
+  const topicNames  = req.body.topicNames ;
+  const {username} = req.params ;
+    try {
+        // Fetch solved problems
+        const solvedProblemCount = await UserProgress.aggregate([
+          { $match: { username: username } }, // Match the specific user
+          { $unwind: "$list" }, // Unwind the 'list' array to access each problem
+          { $match: { "list.status": "Solved" } }, // Filter only solved problems
+          { $count: "totalSolvedProblems" } // Count the number of solved problems
+      ]);
+      
+      // Extract count from the result (if no problems are solved, return 0)
+      const totalSolved = solvedProblemCount.length > 0 ? solvedProblemCount[0].totalSolvedProblems : 0;
+
+        // Await result from the asynchronous function
+        const result = await Promise.all(
+            topicNames.map(async (topicName) => {
+              const solvedCount = await UserProgress.aggregate([
+                { $match: { username: username } }, // Match the specific user
+                { $unwind: '$list' }, // Unwind the 'list' array to work with individual problems
+                {
+                  $lookup: {
+                    from: 'problems', // Join with the Problem collection
+                    localField: 'list.problem',
+                    foreignField: '_id',
+                    as: 'problemDetails',
+                  },
+                },
+                { $unwind: '$problemDetails' }, // Unwind the resulting problems array
+                {
+                  $match: {
+                    'problemDetails.topicName': topicName,
+                    'list.status': 'Solved',
+                  },
+                },
+                { $count: 'solvedProblems' }, // Count the number of solved problems for the topic
+              ]);
+        
+              // Return the count or 0 if no results found
+              return solvedCount[0] ? solvedCount[0].solvedProblems : 0;
+            })
+          );
+        // Return response only once
+        const user = req.user;
+
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(
+                    200,
+                    { user, totalProblems: totalSolved, result },
+                    "User Info fetched successfully"
+                )
+            );
+    } catch (error) {
+        console.error('Error fetching user info:', error);
+
+        // Ensure only one response is sent
+        if (!res.headersSent) {
+            throw new ApiError(500, 'Error fetching user info');
+        }
+    }
+})
+export {registerUser , login  ,getUserInfo ,updateUserInfo, getAllUsersByThereRank, getUserProfileByItsuserName}
