@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { registerUser,login , getUserInfo , updateUserInfo, getAllUsersByThereRank, getUserProfileByItsuserName} from "../controllers/user.controller.js";
 import {authorizeRole, verifyToken} from "../middlewares/auth.middleware.js"
-import { verify } from "jsonwebtoken";
 const router = Router();
 
 router.route("/register").post(registerUser)
