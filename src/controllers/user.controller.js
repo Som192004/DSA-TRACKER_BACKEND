@@ -348,14 +348,14 @@ const getUserProfileByItsuserName = asyncHandler (async (req,res) => {
             })
           );
         // Return response only once
-        const user = req.user;
+        // const user = req.user;
 
         return res
             .status(200)
             .json(
                 new ApiResponse(
                     200,
-                    { user, totalProblems: totalSolved, result },
+                    {totalProblems: totalSolved, result },
                     "User Info fetched successfully"
                 )
             );
