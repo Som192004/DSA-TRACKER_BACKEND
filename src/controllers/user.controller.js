@@ -369,4 +369,5 @@ const getUserProfileByItsuserName = asyncHandler (async (req,res) => {
         }
     }
 })
+
 export {registerUser , login  ,getUserInfo ,updateUserInfo, getAllUsersByThereRank, getUserProfileByItsuserName}
