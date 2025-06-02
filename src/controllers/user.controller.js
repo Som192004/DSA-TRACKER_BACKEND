@@ -276,7 +276,7 @@ const getAllUsersByThereRank = asyncHandler(async (req, res) => {
           fullname: "$userDetails.fullname",
           collegeName: "$userDetails.collegeName",
           email: "$userDetails.email",
-          leetCodeId:"$userDetails.leetCodId",
+          leetCodeId:"$userDetails.leetCodeId",
           solvedCount: 1,
         },
       },
