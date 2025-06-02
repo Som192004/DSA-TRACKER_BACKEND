@@ -299,10 +299,16 @@ const getAllUsersByThereRank = asyncHandler(async (req, res) => {
 const getUserProfileByItsuserName = asyncHandler (async (req,res) => {
   const topicNames  = req.body.topicNames ;
   const {username} = req.params ;
+  const user = await User.findOne({ username: req.params.username });
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+  
     try {
         // Fetch solved problems
         const solvedProblemCount = await UserProgress.aggregate([
-          { $match: { username: username } }, // Match the specific user
+          { $match: { user: user._id } }, // Match the specific user
           { $unwind: "$list" }, // Unwind the 'list' array to access each problem
           { $match: { "list.status": "Solved" } }, // Filter only solved problems
           { $count: "totalSolvedProblems" } // Count the number of solved problems
