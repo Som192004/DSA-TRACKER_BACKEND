@@ -323,7 +323,7 @@ const getUserProfileByItsuserName = asyncHandler (async (req,res) => {
         const result = await Promise.all(
             topicNames.map(async (topicName) => {
               const solvedCount = await UserProgress.aggregate([
-                { $match: { username: username } }, // Match the specific user
+                { $match: { user: user._id } }, // Match the specific user
                 { $unwind: '$list' }, // Unwind the 'list' array to work with individual problems
                 {
                   $lookup: {
@@ -359,6 +359,7 @@ const getUserProfileByItsuserName = asyncHandler (async (req,res) => {
                     "User Info fetched successfully"
                 )
             );
+
     } catch (error) {
         console.error('Error fetching user info:', error);
 
