@@ -1,7 +1,7 @@
 // routes/contactRoute.js
 import express from "express";
 import nodemailer from "nodemailer";
-import Feedback from "../models/Feedback.js";
+import Feedback from "../models/feedback.model.js";
 
 const router = express.Router();
 
