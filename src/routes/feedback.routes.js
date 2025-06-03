@@ -20,7 +20,7 @@ router.post("/contact", async (req, res) => {
         pass: process.env.GMAIL_PASS    // replace with your App Password
       }
     });
-
+    console.log("After this 1")
     const mailOptions = {
       from: process.env.GMAIL_USER,
       to: email,
@@ -52,9 +52,10 @@ router.post("/contact", async (req, res) => {
         </p>
       `
     };
-
+    console.log("After this 2")
     await transporter.sendMail(mailOptions);
-
+    
+    console.log("After this 3")
     res.status(200).json({ success: true, message: "Feedback saved and email sent" });
   } catch (error) {
     console.error("Error saving feedback:", error);
