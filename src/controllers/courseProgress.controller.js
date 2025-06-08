@@ -2,7 +2,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {ApiError} from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
-import { CourseProgress} from "../models/courseprogress.model.js"
+import { CourseProgress} from "../models/courseProgress.model.js"
 import {Video} from   "../models/video.model.js"
 import mongoose from "mongoose";
 
