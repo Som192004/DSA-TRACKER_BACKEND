@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { videoNumbersFromCourse , getVideosList , addVideo ,deleteVideo , getWatchedCountByCourse , getVideoListForAdmin , editVideo} from "../controllers/video.controller.js";
+import { videoNumbersFromCourse , getVideosList , addVideo ,deleteVideo , getWatchedVideoCountByCourse , getVideoListForAdmin , editVideo} from "../controllers/video.controller.js";
 import {verifyToken , authorizeRole ,verifyTokenOfAdmin} from "../middlewares/auth.middleware.js"
 const router = Router();
 
