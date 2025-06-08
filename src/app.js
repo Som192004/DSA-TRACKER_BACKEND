@@ -27,7 +27,6 @@ import adminRouter from "./routes/admin.routes.js"
 import topicRouter from "./routes/topic.routes.js"
 import userProgressRouter from "./routes/userProgress.routes.js"
 import blogRouter from "./routes/blog.routes.js"
-import mentorRouter from "./routes/mentor.routes.js"
 import feedBackRouter from "./routes/feedback.routes.js"
 import courseRouter from "./routes/course.routes.js"
 import videRouter from "./routes/video.routes.js"
@@ -39,7 +38,6 @@ app.use("/admin" , adminRouter)
 app.use("/topic" , topicRouter)
 app.use("/userprogress" , userProgressRouter)
 app.use("/blog" ,blogRouter)
-app.use('/mentor' , mentorRouter)
 app.use('/feedback', feedBackRouter)
 app.use('/courses' , courseRouter)
 app.use('/videos' , videRouter)
