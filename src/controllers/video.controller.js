@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
 import fs from "fs" 
 import { Course } from "../models/course.model.js"
-import { CourseProgress} from "../models/courseprogress.model.js"
+import { CourseProgress } from "../models/courseprogress.model.js"
 import {Video} from   "../models/video.model.js"
 
 //We can add the functionality of the updating the problem by the admin in future ...
