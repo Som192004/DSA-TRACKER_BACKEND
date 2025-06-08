@@ -1,9 +1,46 @@
-import mongoose from 'mongoose';
+import mongoose , {Schema} from "mongoose";
 
-const progressSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
-  watchedVideos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }]
+const courseProgressSchema = new Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+
+  list : [
+    {
+      video: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Video',
+        required: true,
+      },
+      status: {
+        type: String,
+        enum: ['Watched', 'NotWatched'],
+        default : "NotWatched"
+      },
+      notes: {
+        type: String,
+        trim: true,
+        default : "" ,
+      },
+      isBookmarked: {
+        type: Boolean,
+        default: false,
+      },
+    }
+  ]
+  
 }, { timestamps: true });
 
-export const Progress = mongoose.model('Progress', progressSchema);
+courseProgressSchema.pre("save", function (next) {
+  this.list = this.list.map((item) => ({
+    video: item.video,
+    status: item.status || "NotWatched",
+    notes: item.notes || "",
+    isBookmarked: item.isBookmarked ?? false,
+  }));
+  next();
+});
+
+export const CourseProgress = mongoose.model("CourseProgress" , courseProgressSchema)
