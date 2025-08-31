@@ -22,6 +22,11 @@ const problemSchema = new Schema({
   problemNumber : {
     type : Number ,
     required : true ,
+  },
+  videoSolution : {
+    type : String ,
+    trim : true , 
+    default : null ,
   }
 }, { timestamps: true });
 

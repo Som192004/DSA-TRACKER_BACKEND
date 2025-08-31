@@ -16,7 +16,7 @@ import fs from "fs"
             const res = await cloudinary.uploader.upload(localFilePath,{
                 resource_type:"auto"
             })
-            console.log("File Uploaded On Cloudinary . . .",res.url)
+            console.log("File Uploaded On Cloudinary . . .",res)
             fs.unlink(localFilePath, (err) => {
                 if (err) {
                   console.error("Failed to delete local file:", err);
@@ -25,7 +25,7 @@ import fs from "fs"
                 }
               });
             
-            return res.url;
+            return { url: res.secure_url };
         }catch(err){
             //It will remove the file from the server when upload is failed . . .
             fs.unlinkSync(localFilePath)

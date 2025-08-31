@@ -105,6 +105,20 @@ const addProblem = asyncHandler(async (req, res, next) => {
     throw new ApiError(409, "Problem with this problemNumber already exists");
   }
 
+  if (!req.file) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "", "No video solution is uploaded"));
+  }
+
+  const localSolutionPath = req?.file?.path;
+
+   const solutionUrl = await uploadOnCloudinary(localSolutionPath);
+
+    if (!solutionUrl) {
+      throw new ApiError(500, "Failed to upload the solution file to cloudinary");
+    }
+
   // Create the new problem
   const newProblem = await Problem.create({
     name,
@@ -112,6 +126,7 @@ const addProblem = asyncHandler(async (req, res, next) => {
     topicName,
     link,
     problemNumber,
+    videoSolution : solutionUrl.url
   });
 
   //Adding the problem to its topic . . . 
@@ -286,12 +301,52 @@ const editProblem = asyncHandler(async (req,res,next) => {
         return res.status(404).send(new ApiError("Problem not found."));
       }
 
-      return res.status(200).send(new ApiResponse(200 , updatedProblem , "Problem updated successfully."));
+      if (req?.file?.path) {
+        console.log("updating the solution video ");
+        await updateSolution(req, res);
+      }
+
+       const NewupdatedProblem = await Problem.findById(editingProblemId);
+
+      return res.status(200).send(new ApiResponse(200 , NewupdatedProblem , "Problem updated successfully."));
   }catch(err){
       return res.status(500).send(new ApiError(500 , "Internal Server Error"))
   }
 
 })
 
+export const updateSolution = async (req, res) => {
+  const VideoSolutionPath = req.file?.path;
+  const { id } = req.params;
+  if (!VideoSolutionPath) {
+    throw new ApiError(400, "video solution file is missing");
+  }
+
+  const videoSolution = await uploadOnCloudinary(VideoSolutionPath);
+
+  if (!videoSolution.url) {
+    throw new ApiError(400, "Error while uploading the file on the cloudinary");
+  }
+
+  fs.unlink(VideoSolutionPath, (err) => {
+    if (err) {
+      console.error(`Failed to delete uploaded video solution: ${err.message}`);
+    } else {
+      console.log("Uploaded video solution deleted successfully from server");
+    }
+  });
+
+  const updatedSolution = await Problem.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        videoSolution: videoSolution.url,
+      },
+    },
+    { new: true }
+  );
+
+  return updatedSolution;
+};
 
 export {problemNumbersFromTopic , getProblemsList , addProblem  , deleteProblem , getSolvedProblemsCountByTopic , getProblemListForAdmin , editProblem} 
