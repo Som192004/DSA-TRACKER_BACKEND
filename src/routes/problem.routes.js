@@ -6,8 +6,8 @@ import {upload } from "../middlewares/upload.middleware.js"
 
 router.route("/problem-numbers").post(verifyToken , problemNumbersFromTopic)
 router.route("/get-problems-list/:topicName").post(verifyToken , getProblemsList)
-router.route("/add-problem").post(verifyTokenOfAdmin , upload.single('video'), authorizeRole(['Admin']), addProblem)
-router.route("/edit-problem/:editingProblemId").patch(verifyTokenOfAdmin , upload.single('video'), authorizeRole(["Admin"]) , editProblem)
+router.route("/add-problem").post(verifyTokenOfAdmin , upload.single('videoSolution'), authorizeRole(['Admin']), addProblem)
+router.route("/edit-problem/:editingProblemId").patch(verifyTokenOfAdmin , upload.single('videoSolution'), authorizeRole(["Admin"]) , editProblem)
 router.route("/delete-problem/:problemId").delete(verifyTokenOfAdmin , authorizeRole(['Admin']) ,deleteProblem)
 router.route("/admin/get-all-problems").post(verifyTokenOfAdmin , authorizeRole(['Admin']) , getProblemListForAdmin)
 

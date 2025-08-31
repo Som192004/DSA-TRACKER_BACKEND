@@ -111,7 +111,7 @@ const addProblem = asyncHandler(async (req, res, next) => {
         .json(new ApiError(400, "", "No video solution is uploaded"));
   }
 
-  const localSolutionPath = req?.file?.path;
+   const localSolutionPath = req?.file?.path;
 
    const solutionUrl = await uploadOnCloudinary(localSolutionPath);
 
